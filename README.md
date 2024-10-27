@@ -11,3 +11,4 @@ This web app enables users to upload CSV files, input SQL queries, and execute t
 ### Refrence
 - https://duckdb.org/
 - https://github.com/duckdb/duckdb-wasm/tree/main/examples
+- https://chatgpt.com/
