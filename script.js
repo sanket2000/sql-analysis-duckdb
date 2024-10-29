@@ -74,13 +74,15 @@ const runQuery = async () => {
     // Execute user-provided SQL query
     const sql = document.getElementById('sqlQuery').value;
     result = await conn.query(sql);
-    _result = convertToCSV(JSON.parse(result.toString()))
-    document.getElementById('sqlResult').value = result;
+    document.getElementById('sqlResult').value = result.toString();
 
     // Convert result to CSV for download
-    const csvContent = "data:text/csv;charset=utf-8," + _result;
+    const csvContent = convertToCSV(JSON.parse(result.toString()))
     const downloadLink = document.getElementById('downloadLink');
-    downloadLink.setAttribute("href", URL.createObjectURL(new Blob([csvContent])));
+
+    // Create a blob with a MIME type of text/csv
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    downloadLink.setAttribute("href", URL.createObjectURL(blob));
     downloadLink.setAttribute("download", "query_result.csv");
     downloadLink.style.display = "block";
 };
