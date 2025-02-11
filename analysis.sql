@@ -24,7 +24,7 @@ with _base as (
     from base
 )
 select
-    sku,
+    base2.sku,
     sum(sum_total) as total_paid_by_amazon,
     sum(real_quantity) as orders,
     sum(quantity)-sum(real_quantity) as returns,
@@ -32,6 +32,9 @@ select
         WHEN SUM(real_quantity) = 0 THEN 0  -- Handle division by zero
         ELSE SUM(sum_total) / SUM(real_quantity)
     END AS average_per_pc,
+    name_sku.PP
 
 from base2
-group by sku
+left join name_sku
+on base2.sku = name_sku.sku
+group by base2.sku, name_sku.PP
