@@ -54,14 +54,17 @@ function convertToCSV(data) {
 }
 
 const showError = (message) => {
-    document.getElementById('errorMessage').innerText = message;
+    const outputField = document.getElementById('sqlResult');
+    outputField.style.color = "red"; // Make error messages red
+    outputField.value = "Error: " + message;
 };
 
 // Function to run the SQL query on the uploaded CSV
 const runQuery = async () => {
     try {
-        document.getElementById('errorMessage').innerText = "";
+        document.getElementById('sqlResult').style.color = "black"; // Reset color and text for valid output
         document.getElementById('sqlResult').value = "";
+
         const db = await getDb();
         if (!db) throw new Error("DuckDB initialization failed.");
         const conn = await db.connect();
@@ -91,7 +94,17 @@ const runQuery = async () => {
         downloadLink.setAttribute("download", "query_result.csv");
         downloadLink.style.display = "block";
     } catch (error) {
-        showError("Error: " + error.message);
+        document.getElementById('downloadLink').style.display = "none";
+        showError(error.message);
         console.error(error);
     }
+};
+
+const resetAll = () => {
+    selectedFiles = []; // Clear uploaded files
+    document.getElementById('csvFile').value = ""; // Reset file input
+    document.getElementById('sqlQuery').value = ""; // Clear query input
+    document.getElementById('sqlResult').value = ""; // Clear output
+    document.getElementById('sqlResult').style.color = "black"; // Reset color
+    document.getElementById('downloadLink').style.display = "none"; // Hide download link
 };
