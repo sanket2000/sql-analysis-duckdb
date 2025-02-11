@@ -53,36 +53,45 @@ function convertToCSV(data) {
     return [headers.join(','), ...rows].join('\n');
 }
 
+const showError = (message) => {
+    document.getElementById('errorMessage').innerText = message;
+};
+
 // Function to run the SQL query on the uploaded CSV
 const runQuery = async () => {
-    const db = await getDb();
-    if (!db) throw new Error("DuckDB initialization failed.");
-    const conn = await db.connect();
+    try {
+        document.getElementById('errorMessage').innerText = "";
+        document.getElementById('sqlResult').value = "";
+        const db = await getDb();
+        if (!db) throw new Error("DuckDB initialization failed.");
+        const conn = await db.connect();
 
-    // Check if a CSV file is uploaded
-    const fileInput = document.getElementById('csvFile').files[0];
-    if (!fileInput) return alert("Please upload a CSV file.");
-    console.log(fileInput);
+        const fileInput = document.getElementById('csvFile').files;
+        if (!fileInput.length) return alert("Please upload at least one CSV file.");
 
-    // Read CSV data
-    const csvData = await readCSVFile(fileInput);
+        // Process each CSV file
+        for (const file of fileInput) {
+            const csvData = await readCSVFile(file);
+            await db.registerFileText(file.name, csvData);
+            await conn.query(`CREATE OR REPLACE TABLE ${file.name.split('.')[0]} AS FROM '${file.name}';`);
+        }
 
-    // Load CSV data into DuckDB table
-    await db.registerFileText(fileInput.name, csvData);
-    result = await conn.query(`CREATE OR REPLACE TABLE my_table AS FROM '${fileInput.name}';`);
+        // Execute user-provided SQL query
+        const sql = document.getElementById('sqlQuery').value;
+        result = await conn.query(sql);
+        document.getElementById('sqlResult').value = result.toString();
 
-    // Execute user-provided SQL query
-    const sql = document.getElementById('sqlQuery').value;
-    result = await conn.query(sql);
-    document.getElementById('sqlResult').value = result.toString();
+        // Convert result to CSV for download
+        const csvContent = convertToCSV(JSON.parse(result.toString()))
+        const downloadLink = document.getElementById('downloadLink');
 
-    // Convert result to CSV for download
-    const csvContent = convertToCSV(JSON.parse(result.toString()))
-    const downloadLink = document.getElementById('downloadLink');
-
-    // Create a blob with a MIME type of text/csv
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    downloadLink.setAttribute("href", URL.createObjectURL(blob));
-    downloadLink.setAttribute("download", "query_result.csv");
-    downloadLink.style.display = "block";
+        // Create a blob with a MIME type of text/csv
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        downloadLink.setAttribute("href", URL.createObjectURL(blob));
+        downloadLink.setAttribute("download", "query_result.csv");
+        downloadLink.style.display = "block";
+    } catch (error) {
+        showError("Error: " + error.message);
+        console.error(error);
+    }
 };
